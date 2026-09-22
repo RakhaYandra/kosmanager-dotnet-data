@@ -1,0 +1,35 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: rootpass
+          MYSQL_DATABASE: kosmanager
+          MYSQL_USER: kos
+          MYSQL_PASSWORD: kospass
+        ports: ["3308:3306"]
+        options: --health-cmd="mysqladmin ping -h localhost" --health-interval=5s --health-timeout=3s --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+        with: { repository: RakhaYandra/kosmanager-dotnet, path: api-src }
+      - uses: actions/checkout@v4
+        with: { path: data }
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: "8.0.x" }
+      - run: dotnet tool install -g dotnet-ef --version 8.0.13
+      - run: dotnet ef database update --project KosManager.Infrastructure --startup-project KosManager.Api
+        working-directory: api-src
+      - run: mysql -h127.0.0.1 -P3308 -ukos -pkospass kosmanager < KosManager.Api/seed/seed.sql
+        working-directory: api-src
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install duckdb pymysql
+      - run: python3 pipeline.py
+        working-directory: data
+        env:
+          KOS_MYSQL_HOST: 127.0.0.1
+          KOS_MYSQL_PORT: "3308"
