@@ -5,10 +5,19 @@ import duckdb
 DB_PATH = os.environ.get("KOS_DUCKDB", os.path.join(os.path.dirname(os.path.abspath(__file__)), "kosmanager.duckdb"))
 MYSQL_HOST = os.environ.get("KOS_MYSQL_HOST", "127.0.0.1")
 MYSQL_PORT = os.environ.get("KOS_MYSQL_PORT", "3308")
+MYSQL_USER = os.environ.get("KOS_MYSQL_USER", "kos")
+MYSQL_PASSWORD = os.environ.get("KOS_MYSQL_PASSWORD")
+MYSQL_DB = os.environ.get("KOS_MYSQL_DB", "kosmanager")
+
+if not MYSQL_PASSWORD:
+    raise SystemExit("KOS_MYSQL_PASSWORD wajib diisi (lihat .env.example)")
 
 con = duckdb.connect(DB_PATH)
 con.execute("INSTALL mysql; LOAD mysql;")
-con.execute(f"ATTACH 'host={MYSQL_HOST} port={MYSQL_PORT} user=kos password=kospass database=kosmanager' AS kos (TYPE mysql)")
+con.execute(
+    f"ATTACH 'host={MYSQL_HOST} port={MYSQL_PORT} user={MYSQL_USER} "
+    f"password={MYSQL_PASSWORD} database={MYSQL_DB}' AS kos (TYPE mysql)"
+)
 
 for tbl in ["Rooms", "Tenants", "Bills", "Payments", "NotificationLogs"]:
     con.execute(f"CREATE OR REPLACE TABLE raw_{tbl.lower()} AS SELECT * FROM kos.{tbl}")

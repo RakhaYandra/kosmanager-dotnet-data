@@ -38,13 +38,16 @@ MySQL kosmanager --(mysql_scan, read-only)--> raw_* --> gates (assert) --> mart_
 ```
 
 Env: `KOS_MYSQL_HOST` (default 127.0.0.1), `KOS_MYSQL_PORT` (default 3308),
-`KOS_DUCKDB` (default `./kosmanager.duckdb`).
+`KOS_MYSQL_USER` (default kos), `KOS_MYSQL_PASSWORD` (**wajib, tanpa default**),
+`KOS_MYSQL_DB` (default kosmanager), `KOS_DUCKDB` (default `./kosmanager.duckdb`).
 
 ## Cara run 5 menit
 
 ```bash
-pip install duckdb pymysql
-python3 pipeline.py  # butuh MySQL demo jalan (lihat kosmanager-dotnet)
+pip install -r requirements.txt
+cp .env.example .env    # isi KOS_MYSQL_PASSWORD
+set -a; . ./.env; set +a
+python3 pipeline.py     # butuh MySQL demo jalan (lihat kosmanager-dotnet)
 ```
 
 ## Struktur
