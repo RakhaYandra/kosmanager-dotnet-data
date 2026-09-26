@@ -1,0 +1,17 @@
+# Output pipeline — di-generate dari MySQL, jangan di-commit
+*.duckdb
+*.duckdb.wal
+*.parquet
+
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+Thumbs.db
