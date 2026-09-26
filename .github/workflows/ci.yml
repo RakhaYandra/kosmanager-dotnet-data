@@ -28,6 +28,8 @@ jobs:
       - run: dotnet tool install -g dotnet-ef --version 8.0.13
       - run: dotnet ef database update --project KosManager.Infrastructure --startup-project KosManager.Api
         working-directory: api-src
+        env:
+          DB_CONN: "server=127.0.0.1;port=3308;database=kosmanager;user=kos;password=${{ env.MYSQL_PASSWORD }}"
       - run: mysql -h127.0.0.1 -P3308 -ukos -p"$MYSQL_PASSWORD" kosmanager < KosManager.Api/seed/seed.sql
         working-directory: api-src
       - uses: actions/setup-python@v5
