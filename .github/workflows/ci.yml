@@ -34,7 +34,7 @@ jobs:
         working-directory: api-src
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
-      - run: pip install -r requirements.txt
+      - run: pip install -r data/requirements.txt
       - run: python3 pipeline.py
         working-directory: data
         env:
