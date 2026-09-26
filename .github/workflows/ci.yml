@@ -3,14 +3,19 @@ on: [push, pull_request]
 jobs:
   ci:
     runs-on: ubuntu-latest
+    # Throwaway: service container MySQL dibuat fresh per run lalu dibuang.
+    # Tidak ada data sensitif yang bisa bocor dari password ini.
+    env:
+      MYSQL_PASSWORD: ci-dummy-password
+      MYSQL_ROOT_PASSWORD: ci-dummy-root
     services:
       mysql:
         image: mysql:8.4
         env:
-          MYSQL_ROOT_PASSWORD: rootpass
+          MYSQL_ROOT_PASSWORD: ${{ env.MYSQL_ROOT_PASSWORD }}
           MYSQL_DATABASE: kosmanager
           MYSQL_USER: kos
-          MYSQL_PASSWORD: kospass
+          MYSQL_PASSWORD: ${{ env.MYSQL_PASSWORD }}
         ports: ["3308:3306"]
         options: --health-cmd="mysqladmin ping -h localhost" --health-interval=5s --health-timeout=3s --health-retries=20
     steps:
@@ -23,13 +28,22 @@ jobs:
       - run: dotnet tool install -g dotnet-ef --version 8.0.13
       - run: dotnet ef database update --project KosManager.Infrastructure --startup-project KosManager.Api
         working-directory: api-src
-      - run: mysql -h127.0.0.1 -P3308 -ukos -pkospass kosmanager < KosManager.Api/seed/seed.sql
+      - run: mysql -h127.0.0.1 -P3308 -ukos -p"$MYSQL_PASSWORD" kosmanager < KosManager.Api/seed/seed.sql
         working-directory: api-src
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
-      - run: pip install duckdb pymysql
+      - run: pip install -r requirements.txt
       - run: python3 pipeline.py
         working-directory: data
         env:
           KOS_MYSQL_HOST: 127.0.0.1
           KOS_MYSQL_PORT: "3308"
+          KOS_MYSQL_USER: kos
+          KOS_MYSQL_PASSWORD: ${{ env.MYSQL_PASSWORD }}
+      # .duckdb adalah output pipeline — tidak boleh ikut ter-commit.
+      - name: no committed artifacts
+        run: |
+          set -euo pipefail
+          git ls-files | grep -qE '\.duckdb$|^work/|^__pycache__/' \
+            && { echo "::error::output pipeline ikut ter-commit"; exit 1; } \
+            || echo "clean"
